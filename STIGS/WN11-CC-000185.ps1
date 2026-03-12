@@ -27,9 +27,9 @@
 
 .TESTED ON
     Date(s) Tested  :
-    Tested By       : Elizabeth Harnisch
-    Systems Tested  : Windows 11
-    PowerShell Ver. : 5.1
+    Tested By       :
+    Systems Tested  :
+    PowerShell Ver. :
 
 .USAGE
     Run the script in an elevated PowerShell session.
@@ -46,6 +46,7 @@ param()
 # CONFIGURATION
 # =========================
 
+$STIG         = "WN11-CC-000185"
 $RegistryPath = "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer"
 $ValueName    = "NoAutorun"
 $ValueType    = "DWord"
@@ -101,4 +102,10 @@ else {
 # =========================
 
 $VerifiedValue = (Get-ItemProperty -Path $RegistryPath -Name $ValueName).$ValueName
-Write-Output "Verified: $RegistryPath\$ValueName = $VerifiedValue"
+
+if ($VerifiedValue -eq $ValueData) {
+    Write-Output "STIG $STIG: COMPLIANT"
+}
+else {
+    Write-Output "STIG $STIG: NON-COMPLIANT"
+}
