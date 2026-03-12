@@ -1,6 +1,11 @@
+<#
 .SYNOPSIS
     This PowerShell script will prevent attachments from being downloaded from RSS feeds.
     Purpose: STIG/Policy hardening - disable enclosure downloads for IE Feeds
+
+.DESCRIPTION
+    Creates the registry path if it does not exist and ensures the specified
+    registry value is present and configured with the expected data.    
 
 .NOTES
     Author          : Elizabeth Harnisch
@@ -18,42 +23,93 @@
     GPO/MDM Note    : If a Domain GPO/MDM manages this setting, it may overwrite local changes.
 
 .TESTED ON
-    Date(s) Tested  : 
-    Tested By       : 
-    Systems Tested  : 
-    PowerShell Ver. : 
+Date(s) Tested  : 
+Tested By       : 
+Systems Tested  : 
+PowerShell Ver. : 
 
 .USAGE
-    Run elevated (Administrator).
-    Example syntax:
-    .\Set-DisableEnclosureDownload.ps1 -Verbose
+
+Prevents attachments from being downloaded from RSS feeds by setting:
+HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Feeds
+DisableEnclosureDownload (REG_DWORD) = 1
+
+Example syntax:
+
+.\WN11-CC-000295.ps1 -Verbose
+
 #>
 
-# Define the registry path and value information
+[CmdletBinding()]
+param()
+
+# =========================
+# CONFIGURATION
+# =========================
+
 $RegistryPath = "HKLM:\SOFTWARE\Policies\Microsoft\Internet Explorer\Feeds"
 $ValueName    = "DisableEnclosureDownload"
-$ValueType    = "DWord" # REG_DWORD
+$ValueType    = "DWord"
 $ValueData    = 1
 
-# Check if the registry path exists, and create it if it doesn't
-if (-not (Test-Path $RegistryPath)) {
+# =========================
+# ENSURE REGISTRY PATH EXISTS
+# =========================
+
+if (-not (Test-Path -Path $RegistryPath)) {
+
     New-Item -Path $RegistryPath -Force | Out-Null
-    Write-Verbose "Registry path '$RegistryPath' created." -Verbose
+
+    Write-Verbose "Created registry path: $RegistryPath"
+
 }
 
-# Check if the value already exists
-if ($null -eq (Get-ItemProperty -Path $RegistryPath -Name $ValueName -ErrorAction SilentlyContinue)) {
-    # Create the registry value
-    New-ItemProperty -Path $RegistryPath -Name $ValueName -Value $ValueData -PropertyType $ValueType -Force | Out-Null
-    Write-Verbose "Registry value '$ValueName' created with value '$ValueData'." -Verbose
-} else {
-    # Value exists, check if it is the correct value.
-    $CurrentValue = (Get-ItemProperty -Path $RegistryPath -Name $ValueName).$ValueName
+# =========================
+# CHECK CURRENT VALUE
+# =========================
+
+$ExistingProperty = Get-ItemProperty -Path $RegistryPath -Name $ValueName -ErrorAction SilentlyContinue
+
+if ($null -eq $ExistingProperty) {
+
+    New-ItemProperty `
+        -Path $RegistryPath `
+        -Name $ValueName `
+        -Value $ValueData `
+        -PropertyType $ValueType `
+        -Force | Out-Null
+
+    Write-Verbose "Created registry value '$ValueName' with data '$ValueData'."
+
+}
+
+else {
+
+    $CurrentValue = $ExistingProperty.$ValueName
 
     if ($CurrentValue -ne $ValueData) {
-        Set-ItemProperty -Path $RegistryPath -Name $ValueName -Value $ValueData
-        Write-Verbose "Registry value '$ValueName' updated to '$ValueData'." -Verbose
-    } else {
-        Write-Verbose "Registry value '$ValueName' already exists and is equal to '$ValueData'." -Verbose
+
+        Set-ItemProperty `
+            -Path $RegistryPath `
+            -Name $ValueName `
+            -Value $ValueData
+
+        Write-Verbose "Updated registry value '$ValueName' from '$CurrentValue' to '$ValueData'."
+
     }
+
+    else {
+
+        Write-Verbose "Registry value '$ValueName' already configured correctly."
+
+    }
+
 }
+
+# =========================
+# VERIFICATION
+# =========================
+
+$VerifiedValue = (Get-ItemProperty -Path $RegistryPath -Name $ValueName).$ValueName
+
+Write-Output "Verified: $RegistryPath\$ValueName = $VerifiedValue"
