@@ -35,7 +35,7 @@ windows-11-stig-remediation
 │   └─ WN11-AU-000500.ps1
 │
 └─ templates
-   └─ STIG-Remediation-Template.ps1
+   └─ windows-stig-template.ps1
 ```
 
 ---
@@ -88,7 +88,7 @@ STIG WN11-CC-000197: COMPLIANT
 A reusable template for creating additional STIG remediation scripts is located in:
 
 ```
-templates/STIG-Remediation-Template.ps1
+templates/windows-stig-template.ps1
 ```
 
 ---
